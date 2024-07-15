@@ -1523,14 +1523,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			Class<?> type = descriptor.getDependencyType();
 
 			// Step 2: pre-defined value or expression, e.g. from @Value
+			// 解析@Value
 			Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
 			if (value != null) {
 				if (value instanceof String strValue) {
+					// 先解析${}，利用Environment进行填充，如果不是${}则保持原样
 					String resolvedValue = resolveEmbeddedValue(strValue);
 					BeanDefinition bd = (beanName != null && containsBean(beanName) ?
 							getMergedBeanDefinition(beanName) : null);
+					// 再解析#{}，执行Spring EL表达式，如果不是#{}则保持原样
 					value = evaluateBeanDefinitionString(resolvedValue, bd);
 				}
+
+				// 将解析@Value得到的结果进行转行成当前属性的类型，descriptor就表示当前属性，如果转换不成功会报错
 				TypeConverter converter = (typeConverter != null ? typeConverter : getTypeConverter());
 				try {
 					return converter.convertIfNecessary(value, type, descriptor.getTypeDescriptor());
